@@ -1,19 +1,23 @@
 <script setup>
 import { useMediaQuery } from "@vueuse/core";
-import { onMounted, onBeforeUnmount } from "vue";
+import { onMounted, onBeforeUnmount, ref } from "vue";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const isTablet = useMediaQuery("(max-width: 1024px)");
+const isMobile = useMediaQuery("(max-width: 767px)");
+const isTablet = useMediaQuery("(min-width: 768px) and (max-width: 1024px)");
+const isDesktop = useMediaQuery("(min-width: 1025px)");
+const scrollTriggers = ref([]);
 
 const handleVideoError = (e) => {
   console.error("Video failed to load:", e);
 };
 
 onMounted(() => {
-  if (!isTablet.value) {
+  if (isDesktop.value) {
+    // Desktop: animazione completa con pin
     const timeline = gsap.timeline({
       scrollTrigger: {
         trigger: "#showcase",
@@ -33,14 +37,49 @@ onMounted(() => {
         y: 0,
         ease: "power1.in",
       });
-    ScrollTriggerInstance = timeline.ScrollTrigger;
+
+    scrollTriggers.value.push(timeline.scrollTrigger);
+  } else if (isTablet.value) {
+    // Tablet: animazione più semplice senza pin
+    gsap.fromTo(
+      ".mask img",
+      { scale: 1 },
+      {
+        scale: 1.08,
+        scrollTrigger: {
+          trigger: "#showcase",
+          start: "top 80%",
+          end: "bottom 20%",
+          scrub: 1,
+        },
+      }
+    );
+
+    gsap.fromTo(
+      ".content",
+      { opacity: 0, y: 30 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: ".content",
+          start: "bottom bottom",
+          toggleActions: "play none none reverse",
+        },
+      }
+    );
+
+    scrollTriggers.value = ScrollTrigger.getAll();
   }
 });
 
 onBeforeUnmount(() => {
-  if (scrollTriggerInstance) {
-    scrollTriggerInstance.kill();
-  }
+  scrollTriggers.value.forEach((trigger) => {
+    if (trigger) trigger.kill();
+  });
+  ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
 });
 </script>
 
@@ -62,10 +101,10 @@ onBeforeUnmount(() => {
 
     <div class="content">
       <div class="wrapper">
-        <div class="lg:max-w-md">
+        <div class="text-section">
           <h2>Rocket Chip</h2>
 
-          <div class="space-y-5 mt-7 pe-10">
+          <div class="description">
             <p>
               Introducing
               <span class="text-white">
@@ -74,7 +113,7 @@ onBeforeUnmount(() => {
               . M4 powers
             </p>
             <p>
-              It drives Apple Intelligence on IPad Pro, so you can write, create
+              It drives Apple Intelligence on iPad Pro, so you can write, create
               and accomplish more with ease. All in a design that's unbelievably
               thin, light and powerful.
             </p>
@@ -86,16 +125,16 @@ onBeforeUnmount(() => {
             <p class="text-primary">Learn more about Apple Intelligence</p>
           </div>
         </div>
-        <div class="max-w-3xs space-y-14">
-          <div class="space-y-2">
-            <p>Up to</p>
+        <div class="stats-section">
+          <div class="stat-item">
+            <p class="stat-label">Up to</p>
             <h3>4x faster</h3>
-            <p>pro rendering performance than M2</p>
+            <p class="stat-description">pro rendering performance than M2</p>
           </div>
-          <div class="space-y-2">
-            <p>Up to</p>
+          <div class="stat-item">
+            <p class="stat-label">Up to</p>
             <h3>1.5x faster</h3>
-            <p>CPU performance than M2</p>
+            <p class="stat-description">CPU performance than M2</p>
           </div>
         </div>
       </div>
