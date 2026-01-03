@@ -1,15 +1,17 @@
 <script setup>
 import { useMediaQuery } from "@vueuse/core";
-import { onMounted } from "vue";
+import { onMounted, onBeforeUnmount } from "vue";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// Registra il plugin ScrollTrigger
 gsap.registerPlugin(ScrollTrigger);
 
 const isTablet = useMediaQuery("(max-width: 1024px)");
 
-// Esegui l'animazione solo dopo che il DOM è montato
+const handleVideoError = (e) => {
+  console.error("Video failed to load:", e);
+};
+
 onMounted(() => {
   if (!isTablet.value) {
     const timeline = gsap.timeline({
@@ -24,13 +26,20 @@ onMounted(() => {
 
     timeline
       .to(".mask img", {
-        transform: "scale(1.1)",
+        scale: 1.1,
       })
       .to(".content", {
         opacity: 1,
         y: 0,
         ease: "power1.in",
       });
+    ScrollTriggerInstance = timeline.ScrollTrigger;
+  }
+});
+
+onBeforeUnmount(() => {
+  if (scrollTriggerInstance) {
+    scrollTriggerInstance.kill();
   }
 });
 </script>
@@ -38,9 +47,16 @@ onMounted(() => {
 <template>
   <section id="showcase">
     <div class="media">
-      <video src="/videos/game.mp4" loop muted autoplay playsinline />
+      <video
+        src="/videos/game.mp4"
+        loop
+        muted
+        autoplay
+        playsinline
+        @error="handleVideoError"
+      />
       <div class="mask">
-        <img src="/mask-logo.svg" />
+        <img src="/mask-logo.svg" alt="Apple logo mask overlay" />
       </div>
     </div>
 
@@ -58,7 +74,7 @@ onMounted(() => {
               . M4 powers
             </p>
             <p>
-              It drives Apple Intelligence on Ipad Pro, so you can write, create
+              It drives Apple Intelligence on IPad Pro, so you can write, create
               and accomplish more with ease. All in a design that's unbelievably
               thin, light and powerful.
             </p>
