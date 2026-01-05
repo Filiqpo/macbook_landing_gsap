@@ -39,7 +39,7 @@ const updateModelScale = () => {
 };
 
 onMounted(() => {
-  // Setup scena
+  // Setup scene
   scene = new THREE.Scene();
 
   // Setup camera
@@ -57,22 +57,20 @@ onMounted(() => {
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.5; // Aumenta l'esposizione
+  renderer.toneMappingExposure = 1.5;
   canvasRef.value.appendChild(renderer.domElement);
 
-  // Setup luci - ILLUMINATE DI PIÙ
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Aumentato da 0.5 a 1.5
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1);
   scene.add(ambientLight);
 
-  const directionalLight1 = new THREE.DirectionalLight(0xffffff, 5); // Aumentato da 1 a 2
+  const directionalLight1 = new THREE.DirectionalLight(0xffffff, 5);
   directionalLight1.position.set(5, 5, 5);
   scene.add(directionalLight1);
 
-  const directionalLight2 = new THREE.DirectionalLight(0xffffff, 5); // Aumentato da 0.5 a 1.5
+  const directionalLight2 = new THREE.DirectionalLight(0xffffff, 5);
   directionalLight2.position.set(-5, 5, -5);
   scene.add(directionalLight2);
 
-  // Luce frontale aggiuntiva
   const frontLight = new THREE.DirectionalLight(0xffffff, 1);
   frontLight.position.set(0, 0, 5);
   scene.add(frontLight);
@@ -85,18 +83,14 @@ onMounted(() => {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
-
-  // DISABILITA ZOOM
   controls.enableZoom = false;
 
-  // Setup DRACO Loader
   const dracoLoader = new DRACOLoader();
   dracoLoader.setDecoderPath(
     "https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
   );
   dracoLoader.setDecoderConfig({ type: "js" });
 
-  // Carica modello con DRACO support
   const loader = new GLTFLoader();
   loader.setDRACOLoader(dracoLoader);
 
