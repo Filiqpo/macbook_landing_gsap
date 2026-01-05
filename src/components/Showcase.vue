@@ -39,7 +39,7 @@ onMounted(() => {
 
     scrollTriggers.value.push(timeline.scrollTrigger);
   } else if (isTablet.value) {
-    gsap.fromTo(
+    const maskTween = gsap.fromTo(
       ".mask img",
       { scale: 1 },
       {
@@ -53,7 +53,9 @@ onMounted(() => {
       }
     );
 
-    gsap.fromTo(
+    scrollTriggers.value.push(maskTween.scrollTrigger);
+
+    const contentTween = gsap.fromTo(
       ".content",
       { opacity: 0, y: 30 },
       {
@@ -69,7 +71,7 @@ onMounted(() => {
       }
     );
 
-    scrollTriggers.value = ScrollTrigger.getAll();
+    scrollTriggers.value.push(contentTween.scrollTrigger);
   }
 });
 
@@ -77,7 +79,7 @@ onBeforeUnmount(() => {
   scrollTriggers.value.forEach((trigger) => {
     if (trigger) trigger.kill();
   });
-  ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  scrollTriggers.value = [];
 });
 </script>
 
@@ -111,7 +113,7 @@ onBeforeUnmount(() => {
               . M4 powers
             </p>
             <p>
-              It drives Apple Intelligence on iPad Pro, so you can write, create
+              It drives Apple Intelligence on MacBook, so you can write, create
               and accomplish more with ease. All in a design that's unbelievably
               thin, light and powerful.
             </p>

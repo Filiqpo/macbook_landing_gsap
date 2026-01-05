@@ -14,14 +14,16 @@ gsap.registerPlugin(ScrollTrigger);
 const isMobile = useMediaQuery("(max-width: 1024px)");
 const canvasRef = ref(null);
 const macbookStore = useMacbookStore();
+const createdTriggers = [];
+let modelReadyPromise;
 
 let scene, camera, renderer, model, groupRef;
 let animationFrameId;
 let currentVideoTexture = null;
 let currentVideo = null;
 let screenMesh = null;
+let handleResize;
 
-// Pre-load all feature videos
 const preloadVideos = () => {
   featureSequence.forEach((feature) => {
     const v = document.createElement("video");
@@ -37,10 +39,8 @@ const preloadVideos = () => {
 };
 
 const setupScene = () => {
-  // Scene
   scene = new THREE.Scene();
 
-  // Camera
   camera = new THREE.PerspectiveCamera(
     50,
     canvasRef.value.clientWidth / canvasRef.value.clientHeight,
@@ -49,7 +49,6 @@ const setupScene = () => {
   );
   camera.position.set(0, 0, 5);
 
-  // Renderer
   renderer = new THREE.WebGLRenderer({
     antialias: true,
     alpha: true,
@@ -61,7 +60,6 @@ const setupScene = () => {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.8;
 
-  // Lights - Studio Setup
   const ambientLight = new THREE.AmbientLight(0xffffff, 2);
   scene.add(ambientLight);
 
@@ -93,22 +91,18 @@ const setupScene = () => {
   hemiLight.position.set(0, 20, 0);
   scene.add(hemiLight);
 
-  // Group for model rotation
   groupRef = new THREE.Group();
   scene.add(groupRef);
 
-  // Load MacBook model
-  loadModel();
+  modelReadyPromise = loadModel();
 
-  // Animation loop
   const animate = () => {
     animationFrameId = requestAnimationFrame(animate);
     renderer.render(scene, camera);
   };
   animate();
 
-  // Handle resize
-  const handleResize = () => {
+  handleResize = () => {
     if (!canvasRef.value) return;
     camera.aspect = canvasRef.value.clientWidth / canvasRef.value.clientHeight;
     camera.updateProjectionMatrix();
@@ -118,48 +112,49 @@ const setupScene = () => {
 };
 
 const loadModel = () => {
-  const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath(
-    "https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
-  );
-  dracoLoader.setDecoderConfig({ type: "js" });
+  return new Promise((resolve, reject) => {
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath(
+      "https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
+    );
+    dracoLoader.setDecoderConfig({ type: "js" });
 
-  const loader = new GLTFLoader();
-  loader.setDRACOLoader(dracoLoader);
+    const loader = new GLTFLoader();
+    loader.setDRACOLoader(dracoLoader);
 
-  // Usa il modello comune
-  const modelPath = "/models/macbook-transformed.glb";
+    const modelPath = "/models/macbook-transformed.glb";
 
-  loader.load(
-    modelPath,
-    (gltf) => {
-      model = gltf.scene;
-      const scale = isMobile.value ? 0.05 : 0.08;
-      model.scale.set(scale, scale, scale);
-      model.position.set(0, -1, 0);
+    loader.load(
+      modelPath,
+      (gltf) => {
+        model = gltf.scene;
+        const scale = isMobile.value ? 0.05 : 0.08;
+        model.scale.set(scale, scale, scale);
+        model.position.set(0, -1, 0);
 
-      groupRef.add(model);
+        groupRef.add(model);
 
-      // Trova e salva il mesh dello schermo
-      findScreenMesh();
+        findScreenMesh();
 
-      // Setup texture iniziale dopo aver trovato lo schermo
-      if (screenMesh) {
-        updateModelTexture("/videos/feature-1.mp4");
+        if (screenMesh) {
+          updateModelTexture("/videos/feature-1.mp4");
+        }
+
+        console.log("✅ Model loaded successfully");
+        resolve();
+      },
+      (progress) => {
+        console.log(
+          "📦 Loading:",
+          Math.round((progress.loaded / progress.total) * 100) + "%"
+        );
+      },
+      (error) => {
+        console.error("❌ Error loading model:", error);
+        reject(error);
       }
-
-      console.log("✅ Model loaded successfully");
-    },
-    (progress) => {
-      console.log(
-        "📦 Loading:",
-        Math.round((progress.loaded / progress.total) * 100) + "%"
-      );
-    },
-    (error) => {
-      console.error("❌ Error loading model:", error);
-    }
-  );
+    );
+  });
 };
 
 const findScreenMesh = () => {
@@ -171,7 +166,6 @@ const findScreenMesh = () => {
     if (child.isMesh) {
       console.log(`Found mesh: ${child.name}`);
 
-      // Cerca Object_123 o altri nomi comuni
       if (
         child.name === "Object_123" ||
         child.name.toLowerCase().includes("screen") ||
@@ -200,7 +194,6 @@ const createVideoElement = (src) => {
     video.crossOrigin = "anonymous";
     video.setAttribute("webkit-playsinline", "true");
 
-    // Aspetta che il video abbia dati prima di risolvere la promise
     video.addEventListener(
       "canplay",
       () => {
@@ -212,13 +205,12 @@ const createVideoElement = (src) => {
           })
           .catch((err) => {
             console.error("❌ Video play error:", err);
-            resolve(video); // Risolvi comunque per non bloccare
+            resolve(video);
           });
       },
       { once: true }
     );
 
-    // Fallback timeout
     setTimeout(() => {
       if (video.readyState < 2) {
         console.warn("⚠️ Video loading timeout, proceeding anyway");
@@ -238,21 +230,17 @@ const updateModelTexture = async (videoPath) => {
 
   console.log("🎬 Updating texture to:", videoPath);
 
-  // Pulisci il video precedente
   if (currentVideo) {
     currentVideo.pause();
     currentVideo.src = "";
   }
 
-  // Dispose della texture precedente
   if (currentVideoTexture) {
     currentVideoTexture.dispose();
   }
 
-  // Aspetta che il video sia pronto
   currentVideo = await createVideoElement(videoPath);
 
-  // Crea video texture DOPO che il video è pronto
   currentVideoTexture = new THREE.VideoTexture(currentVideo);
   currentVideoTexture.colorSpace = THREE.SRGBColorSpace;
   currentVideoTexture.minFilter = THREE.LinearFilter;
@@ -260,14 +248,12 @@ const updateModelTexture = async (videoPath) => {
   currentVideoTexture.format = THREE.RGBAFormat;
   currentVideoTexture.needsUpdate = true;
 
-  // Crea un nuovo materiale per lo schermo
   const screenMaterial = new THREE.MeshBasicMaterial({
     map: currentVideoTexture,
     side: THREE.DoubleSide,
     toneMapped: false,
   });
 
-  // Applica il nuovo materiale
   screenMesh.material = screenMaterial;
 
   console.log("✅ Texture applied to screen");
@@ -279,7 +265,6 @@ const setupAnimations = () => {
     return;
   }
 
-  // 3D MODEL ROTATION ANIMATION
   const modelTimeline = gsap.timeline({
     scrollTrigger: {
       trigger: "#f-canvas",
@@ -289,6 +274,7 @@ const setupAnimations = () => {
       pin: true,
     },
   });
+  createdTriggers.push(modelTimeline.scrollTrigger);
 
   // 3D SPIN
   modelTimeline.to(groupRef.rotation, {
@@ -305,6 +291,7 @@ const setupAnimations = () => {
       scrub: 1,
     },
   });
+  createdTriggers.push(timeline.scrollTrigger);
 
   // Content & Texture Sync
   timeline
@@ -334,36 +321,43 @@ onMounted(() => {
   preloadVideos();
   setupScene();
 
-  // Aspetta che il modello sia caricato prima di inizializzare le animazioni
-  setTimeout(() => {
-    if (screenMesh) {
-      setupAnimations();
-    } else {
-      console.error("❌ Cannot setup animations: screen mesh not found");
-    }
-  }, 1500);
+  if (modelReadyPromise) {
+    modelReadyPromise
+      .then(() => {
+        if (screenMesh) {
+          setupAnimations();
+        } else {
+          console.error("❌ Cannot setup animations: screen mesh not found");
+        }
+      })
+      .catch((err) => {
+        console.error("❌ Error loading model for animations:", err);
+      });
+  } else {
+    console.warn("⚠️ modelReadyPromise not set; skipping animation setup");
+  }
 });
 
 onBeforeUnmount(() => {
-  // Cleanup
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
   }
 
-  // Stop video
   if (currentVideo) {
     currentVideo.pause();
     currentVideo.src = "";
     currentVideo = null;
   }
 
-  // Dispose texture
   if (currentVideoTexture) {
     currentVideoTexture.dispose();
     currentVideoTexture = null;
   }
 
-  ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  createdTriggers.forEach((trigger) => {
+    if (trigger) trigger.kill();
+  });
+  createdTriggers.length = 0;
 
   if (renderer) {
     renderer.dispose();
