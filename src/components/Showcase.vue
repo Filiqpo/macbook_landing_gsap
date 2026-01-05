@@ -17,7 +17,6 @@ const handleVideoError = (e) => {
 
 onMounted(() => {
   if (isDesktop.value) {
-    // Desktop: animazione completa con pin
     const timeline = gsap.timeline({
       scrollTrigger: {
         trigger: "#showcase",
@@ -40,7 +39,6 @@ onMounted(() => {
 
     scrollTriggers.value.push(timeline.scrollTrigger);
   } else if (isTablet.value) {
-    // Tablet: animazione più semplice senza pin
     gsap.fromTo(
       ".mask img",
       { scale: 1 },
