@@ -2,7 +2,6 @@
 import { useMediaQuery } from "@vueuse/core";
 import { onMounted } from "vue";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/all";
 
 const isMobile = useMediaQuery("max-width: 1024px");
 
