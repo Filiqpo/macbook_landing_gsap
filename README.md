@@ -1,5 +1,22 @@
-# Vue 3 + Vite
+# MacBook Pro Landing Page
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+A modern, interactive landing page for MacBook Pro featuring 3D models, scroll-triggered animations, and dynamic video content.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## Tech Stack
+
+- **Vue 3** – Composition API with `<script setup>`
+- **Vite** – Fast build tool & dev server
+- **Three.js** – 3D graphics & model rendering
+- **GSAP** – Animations & ScrollTrigger
+- **Tailwind CSS** – Utility-first styling
+- **Pinia** – State management
+- **@vueuse/core** – Vue composables
+
+## Features
+
+- Interactive 3D MacBook model with dynamic video textures
+- Scroll-triggered animations and parallax effects
+- Responsive design (mobile, tablet, desktop)
+- Advanced lighting and material rendering
+- Performance-optimized with DRACO compression
+- Modular component architecture
