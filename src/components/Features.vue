@@ -140,15 +140,9 @@ const loadModel = () => {
           updateModelTexture("/videos/feature-1.mp4");
         }
 
-        console.log("✅ Model loaded successfully");
         resolve();
       },
-      (progress) => {
-        console.log(
-          "📦 Loading:",
-          Math.round((progress.loaded / progress.total) * 100) + "%"
-        );
-      },
+      undefined,
       (error) => {
         console.error("❌ Error loading model:", error);
         reject(error);
@@ -160,12 +154,8 @@ const loadModel = () => {
 const findScreenMesh = () => {
   if (!model) return;
 
-  console.log("🔍 Searching for screen mesh...");
-
   model.traverse((child) => {
     if (child.isMesh) {
-      console.log(`Found mesh: ${child.name}`);
-
       if (
         child.name === "Object_123" ||
         child.name.toLowerCase().includes("screen") ||
@@ -174,14 +164,9 @@ const findScreenMesh = () => {
         child.name === "Screen"
       ) {
         screenMesh = child;
-        console.log("✅ Screen mesh found:", child.name);
       }
     }
   });
-
-  if (!screenMesh) {
-    console.warn("⚠️ Screen mesh not found!");
-  }
 };
 
 const createVideoElement = (src) => {
@@ -200,11 +185,9 @@ const createVideoElement = (src) => {
         video
           .play()
           .then(() => {
-            console.log("✅ Video ready and playing:", src);
             resolve(video);
           })
-          .catch((err) => {
-            console.error("❌ Video play error:", err);
+          .catch(() => {
             resolve(video);
           });
       },
@@ -213,7 +196,6 @@ const createVideoElement = (src) => {
 
     setTimeout(() => {
       if (video.readyState < 2) {
-        console.warn("⚠️ Video loading timeout, proceeding anyway");
         resolve(video);
       }
     }, 3000);
@@ -223,13 +205,6 @@ const createVideoElement = (src) => {
 };
 
 const updateModelTexture = async (videoPath) => {
-  if (!screenMesh) {
-    console.warn("⚠️ Cannot update texture: screen mesh not found");
-    return;
-  }
-
-  console.log("🎬 Updating texture to:", videoPath);
-
   if (currentVideo) {
     currentVideo.pause();
     currentVideo.src = "";
@@ -255,16 +230,9 @@ const updateModelTexture = async (videoPath) => {
   });
 
   screenMesh.material = screenMaterial;
-
-  console.log("✅ Texture applied to screen");
 };
 
 const setupAnimations = () => {
-  if (!groupRef) {
-    console.warn("groupRef not initialized");
-    return;
-  }
-
   const modelTimeline = gsap.timeline({
     scrollTrigger: {
       trigger: "#f-canvas",
@@ -276,13 +244,11 @@ const setupAnimations = () => {
   });
   createdTriggers.push(modelTimeline.scrollTrigger);
 
-  // 3D SPIN
   modelTimeline.to(groupRef.rotation, {
     y: Math.PI * 2,
     ease: "power1.inOut",
   });
 
-  // SYNC THE FEATURE CONTENT
   const timeline = gsap.timeline({
     scrollTrigger: {
       trigger: "#f-canvas",
@@ -293,7 +259,6 @@ const setupAnimations = () => {
   });
   createdTriggers.push(timeline.scrollTrigger);
 
-  // Content & Texture Sync
   timeline
     .call(() => {
       updateModelTexture("/videos/feature-1.mp4");
@@ -326,15 +291,11 @@ onMounted(() => {
       .then(() => {
         if (screenMesh) {
           setupAnimations();
-        } else {
-          console.error("❌ Cannot setup animations: screen mesh not found");
         }
       })
       .catch((err) => {
         console.error("❌ Error loading model for animations:", err);
       });
-  } else {
-    console.warn("⚠️ modelReadyPromise not set; skipping animation setup");
   }
 });
 
