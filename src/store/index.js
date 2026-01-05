@@ -5,7 +5,7 @@ export const useMacbookStore = defineStore("macbook", {
     color: "#2e2c2e",
     scale: 0.08,
     texture: "/videos/feature-1.mp4",
-    modelPath: "/models/macbook-16-transformed.glb", // Modello di default
+    modelPath: "/models/macbook-16-transformed.glb",
   }),
 
   actions: {
@@ -37,5 +37,12 @@ export const useMacbookStore = defineStore("macbook", {
       this.texture = "/videos/feature-1.mp4";
       this.modelPath = "/models/macbook-16-transformed.glb";
     },
+  },
+
+  getters: {
+    isSpaceBlack: (state) => state.color === "#2e2c2e",
+    isSilver: (state) => state.color === "#adb5bd",
+    is14Inch: (state) => state.scale === 0.06,
+    is16Inch: (state) => state.scale === 0.08,
   },
 });
